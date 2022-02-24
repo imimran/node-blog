@@ -2,6 +2,9 @@ import User from "../models/user";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { JWT_KEY } from "../config";
+import * as Promise from "bluebird";
+import fs from "fs";
+Promise.promisifyAll(fs);
 
 const login = async (req, res) => {
   const { username, password } = req.body;
@@ -64,8 +67,38 @@ const addUser = async (req, res) => {
   return res.status(201).json({ msg: "User create successfully" });
 };
 
+const bulkInsert = async (req, res) => {
+  fs.readFileAsync("users.json", "utf8").then(function (resolve, reject) {
+    var users = JSON.parse(resolve);
+
+    for (let i = 0; i < users.length; i++) {
+      console.log();
+      let user = users[i];
+      console.log("user", user);
+      // first entries have no date
+      // if(typeof user.date != 'undefined'){
+      // var formatDate = user.date.split('\n')[1].trim();   // Thu 08 Oct 2015
+      // user.date = formatDate;
+
+      var newUser = new User(user);
+      newUser.username = user.username;
+      newUser.email = user.email;
+      newUser.password = user.password;
+      newUser.createdAt = user.createdAt;
+      newUser.updatedAt = user.updatedAt;
+
+      console.log(newUser);
+      newUser.save();
+
+      // }
+    }
+    return res.status(201).json({ msg: "successfuly" });
+  });
+};
+
 export default {
   getAllUser,
   addUser,
   login,
+  bulkInsert,
 };
